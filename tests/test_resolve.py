@@ -1,8 +1,9 @@
-from unittest import mock, patch
-
 from uns import resolve
 
 
-def test_resolve(sock):
-    assert 2 == 2
-#    resolve('foo.com', 1)
+def test_resolve(sockclass):
+    resolve('foo.com', 1)
+    sockclass.assert_called_once()
+    sock = sockclass.return_value
+    sock.settimeout.assert_called_once_with(1)
+    sock.sendto.assert_called_once_with(b'\x01foo.com', ('224.0.0.70', 5333))

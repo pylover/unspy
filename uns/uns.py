@@ -1,9 +1,15 @@
-import sock
+import struct
+import socket
 import unittest
 
 
 VERB_DISCOVER = 1
 VERB_ANSWER = 2
+
+
+GRP = '224.0.0.70'
+PORT = 5333
+TARGET = (GRP, PORT)
 
 
 def createsocket(timeout=None):
@@ -28,10 +34,10 @@ def createpacket(verb, data):
     return header + data.encode()
 
 
-def resolve(self, hostname, timeout):
+def resolve(hostname, timeout):
     sock = createsocket(timeout)
     sock.sendto(createpacket(VERB_DISCOVER, hostname), TARGET)
     while True:
         verb, name, addr, _ = readpacket(sock)
-        if (verb == ANSWER) and (name == hostname):
+        if (verb == VERB_ANSWER) and (name == hostname):
             return name, addr

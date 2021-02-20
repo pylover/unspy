@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 
 # reading package version (same way the sqlalchemy does)
-with open(join(dirname(__file__), 'uns.py')) as v_file:
+with open(join(dirname(__file__), 'uns', '__init__.py')) as v_file:
     package_version = re.compile('.*__version__ = \'(.*?)\'', re.S).\
         match(v_file.read()).group(1)
 
