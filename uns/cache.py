@@ -70,12 +70,13 @@ class DB:
     def __call__(self, resolver):
         @functools.wraps(resolver)
         def wrapper(name, *a, **k):
-            fromcache = True
             try:
                 name, addr = self.resolve(name)
+                fromcache = True
             except KeyError:
                 name, addr = resolver(name, *a, **k)
                 fromcache = False
+                self.append(addr, name)
 
             return name, addr, fromcache
 

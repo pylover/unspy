@@ -22,6 +22,7 @@ def test_cli_resolve_cache(socketclass_mock, cliapp):
         sock.recvfrom.assert_not_called()
         openmock.return_value.write.assert_called_with('10.0.0.3 bar.com\n')
 
+        openmock.reset_mock()
         s, o, e = resolvecli('foo.com')
         assert e == ''
         assert s == 0
@@ -31,6 +32,10 @@ def test_cli_resolve_cache(socketclass_mock, cliapp):
         sock.settimeout.assert_not_called()
         sock.sendto.assert_called_once_with(b'\x01foo.com', mock.ANY)
         sock.recvfrom.assert_called_once()
+        openmock.return_value.write.assert_has_calls([
+            mock.call('10.0.0.3 bar.com\n'),
+            mock.call('10.0.0.2 foo.com\n'),
+        ])
 
 
 def test_cli_resolve_nocache(socketclass_mock, cliapp):
