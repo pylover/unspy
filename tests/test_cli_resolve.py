@@ -1,6 +1,8 @@
+import socket
 import functools
 
 from unittest import mock
+
 
 cachefile = '''
 #commented line
@@ -79,6 +81,23 @@ def test_cli_resolve_nocache(socketclass_mock, cliapp):
     s, o, e = nocache('--short', 'foo.com')
     assert s == 0
     assert o == '10.0.0.2\n'
+
+
+def test_cli_resolve_timeout(socketclass_mock, cliapp):
+    resolve = functools.partial(cliapp, 'resolve')
+    sock = socketclass_mock.return_value
+
+    # timeout
+    sock.recvfrom.side_effect = socket.timeout
+    s, o, e = resolve('h.', '-t 8', '--nocache')
+    assert e == 'Timeout reached: 8.\n'
+    assert s == 2
+
+    # ctrl+c
+    sock.recvfrom.side_effect = KeyboardInterrupt
+    s, o, e = resolve('h.', '--nocache')
+    assert s == 3
+    assert e == 'Terminated by user.\n'
 
 
 if __name__ == '__main__':

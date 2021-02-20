@@ -1,3 +1,4 @@
+import socket
 import functools
 from unittest import mock
 
@@ -34,3 +35,15 @@ def test_cli_find(socketclass_mock, cliapp):
         socketclass_mock.assert_called_once()
         sock = socketclass_mock.return_value
         sock.settimeout.assert_called_with(5)
+
+        # timeout
+        sock.recvfrom.side_effect = socket.timeout
+        s, o, e = findcli('h.')
+        assert s == 2
+        assert e == 'Timeout reached: 5.\n'
+
+        # ctrl+c
+        sock.recvfrom.side_effect = KeyboardInterrupt
+        s, o, e = findcli('h.')
+        assert s == 3
+        assert e == 'Terminated by user.\n'

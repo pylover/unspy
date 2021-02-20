@@ -90,13 +90,13 @@ class Find(cli.SubCommand):
                 printrecord(n, a, False, short=args.short)
         except socket.timeout:
             if not args.short:
-                print(f'Timeout reached: {args.timeout}', file=sys.stderr)
-            return 1
+                print(f'Timeout reached: {args.timeout}.', file=sys.stderr)
+            return 2
 
         except KeyboardInterrupt:
             if not args.short:
                 print('Terminated by user.', file=sys.stderr)
-            return 1
+            return 3
 
 
 class Resolve(cli.SubCommand):
@@ -128,13 +128,13 @@ class Resolve(cli.SubCommand):
             name, addr = resolve(args.hostname, timeout=args.timeout)
         except socket.timeout:
             if not args.short:
-                print(f'Timeout reached: {args.timeout}', file=sys.stderr)
-            return 1
+                print(f'Timeout reached: {args.timeout}.', file=sys.stderr)
+            return 2
 
         except KeyboardInterrupt:
             if not args.short:
                 print('Terminated by user.', file=sys.stderr)
-            return 1
+            return 3
         else:
             printrecord(name, addr, False, short=args.short)
 
