@@ -2,11 +2,19 @@ import functools
 
 from unittest import mock
 
+cachefile = '''
+#commented line
+
+ this is another way to comment a line
+
+10.0.0.3 bar.com
+'''
+
 
 def test_cli_resolve_cache(socketclass_mock, cliapp):
     resolvecli = functools.partial(cliapp, 'resolve')
 
-    openmock = mock.mock_open(read_data='10.0.0.3 bar.com\n')
+    openmock = mock.mock_open(read_data=cachefile)
     with mock.patch('uns.cache.open', openmock), \
             mock.patch('os.path.exists') as existsmock:
         existsmock.return_value = True
@@ -36,6 +44,16 @@ def test_cli_resolve_cache(socketclass_mock, cliapp):
             mock.call('10.0.0.3 bar.com\n'),
             mock.call('10.0.0.2 foo.com\n'),
         ])
+
+    # When file is invalid
+    openmock = mock.mock_open(read_data='MalformedLine')
+    with mock.patch('uns.cache.open', openmock), \
+            mock.patch('os.path.exists') as existsmock:
+        existsmock.return_value = True
+        s, o, e = resolvecli('foo.com')
+        assert s == 1
+        assert o == ''
+        assert e == 'Cannot parse: MalformedLine\n'
 
 
 def test_cli_resolve_nocache(socketclass_mock, cliapp):
