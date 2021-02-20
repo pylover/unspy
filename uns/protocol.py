@@ -1,11 +1,8 @@
 import struct
 import socket
 
-
-from .constants import UDP_READSIZE, IGMP_ADDRESS, IGMP_PORT
-
-VERB_DISCOVER = 1
-VERB_ANSWER = 2
+from .constants import UDP_READSIZE, IGMP_ADDRESS, IGMP_PORT, VERB_ANSWER, \
+    VERB_DISCOVER
 
 
 def createsocket(timeout=None):
@@ -40,3 +37,17 @@ def resolve(hostname, timeout):
         verb, name, addr, _ = readpacket(sock)
         if (verb == VERB_ANSWER) and (name == hostname):
             return name, addr
+
+
+def sniff():
+    sock = createsocket()
+    sock.bind((IGMP_ADDRESS, IGMP_PORT))
+    mreq = struct.pack(
+        '4sl',
+        socket.inet_aton(IGMP_ADDRESS),
+        socket.INADDR_ANY
+    )
+    sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+
+    while True:
+        yield readpacket(sock)

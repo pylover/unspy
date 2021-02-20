@@ -4,7 +4,7 @@ from os import path, environ
 
 import easycli as cli
 
-from .constants import IGMP_PORT, IGMP_ADDRESS
+from .constants import IGMP_PORT, IGMP_ADDRESS, VERBS
 from . import protocol, cache
 
 
@@ -94,18 +94,13 @@ class Sniff(cli.SubCommand):
     __arguments__ = [
     ]
 
-#    def __call__(self, args):
-#        sock = createsocket()
-#        print(f'Listening to {GRP}:{IGMP_PORT}')
-#        sock.bind(TARGET)
-#        mreq = struct.pack("4sl", socket.inet_aton(GRP), socket.INADDR_ANY)
-#        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-#        try:
-#            while True:
-#                verb, name, addr, port = readpacket(sock)
-#                print(f'{addr}:{port} {name}')
-#        except KeyboardInterrupt:
-#            print('Terminated by user.', file=sys.stderr)
+    def __call__(self, args):
+        print(f'Listening to {IGMP_ADDRESS}:{IGMP_PORT}')
+        try:
+            for verb, name, addr, port in protocol.sniff():
+                print(f'{addr}:{port} {VERBS.get(verb)}{name}')
+        except KeyboardInterrupt:
+            print('Terminated by user.', file=sys.stderr)
 
 
 class Resolve(cli.SubCommand):
