@@ -20,6 +20,7 @@ dist:
 requirements-dev:
 	pip install -r requirements-dev.txt
 
+
 .PHONY: dev
 dev: requirements-dev
 	pip install -e .

@@ -1,5 +1,8 @@
+-r requirements-ci.txt
 pytest-pudb
 pytest-cov
 ropevim
 ipython
+bddcli
+
 
