@@ -23,7 +23,7 @@ def readpacket(sock):
 
 
 def createpacket(verb, data):
-    header = struct.pack('>B', VERB_DISCOVER)
+    header = struct.pack('>B', verb)
     return header + data.encode()
 
 
@@ -63,3 +63,8 @@ def find(pattern, timeout=None):
         verb, name, addr, _ = readpacket(sock)
         if verb == VERB_ANSWER:
             yield name, addr
+
+
+def answer(name, address=IGMP_ADDRESS, port=IGMP_PORT):
+    sock = createsocket()
+    sock.sendto(createpacket(VERB_ANSWER, name), (address, port))

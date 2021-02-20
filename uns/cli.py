@@ -40,12 +40,9 @@ class Answer(cli.SubCommand):
         ),
     ]
 
-#    def __call__(self, args):
-#        answer = args.hostname
-#        sock = createsocket()
-#        verb = struct.pack('>B', VERB_ANSWER)
-#        print(f'Answering {answer} to {args.address}:{args.port}')
-#        sock.sendto(verb + answer.encode(), (args.address, args.port))
+    def __call__(self, args):
+        print(f'Answering {args.hostname} to {args.address}:{args.port}')
+        protocol.answer(args.hostname, address=args.address, port=args.port)
 
 
 class Sniff(cli.SubCommand):
