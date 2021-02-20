@@ -2,7 +2,7 @@ from os import path, environ
 
 import easycli as cli
 
-from .constants import PORT, IGMP_ADDRESS
+from .constants import IGMP_PORT, IGMP_ADDRESS
 
 
 DEFAULT_DBFILE = path.join(environ['HOME'], '.local', 'uns')
@@ -31,9 +31,9 @@ class Answer(cli.SubCommand):
         ),
         cli.Argument(
             '-p', '--port',
-            default=PORT,
+            default=IGMP_PORT,
             type=int,
-            help=f'Default: {PORT}'
+            help=f'Default: {IGMP_PORT}'
         ),
     ]
 
@@ -119,7 +119,7 @@ class Sniff(cli.SubCommand):
 
 #    def __call__(self, args):
 #        sock = createsocket()
-#        print(f'Listening to {GRP}:{PORT}')
+#        print(f'Listening to {GRP}:{IGMP_PORT}')
 #        sock.bind(TARGET)
 #        mreq = struct.pack("4sl", socket.inet_aton(GRP), socket.INADDR_ANY)
 #        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
