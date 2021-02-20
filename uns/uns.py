@@ -10,6 +10,7 @@ VERB_ANSWER = 2
 GRP = '224.0.0.70'
 PORT = 5333
 TARGET = (GRP, PORT)
+READSIZE = 128
 
 
 def createsocket(timeout=None):
@@ -25,7 +26,7 @@ def createsocket(timeout=None):
 
 
 def readpacket(sock):
-    data, host = sock.recvfrom(256)
+    data, host = sock.recvfrom(READSIZE)
     return data[0], data[1:].decode(), host[0], host[1]
 
 

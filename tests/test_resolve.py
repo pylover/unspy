@@ -1,3 +1,5 @@
+from unittest import mock
+
 from uns import resolve
 
 
@@ -6,4 +8,8 @@ def test_resolve(sockclass):
     sockclass.assert_called_once()
     sock = sockclass.return_value
     sock.settimeout.assert_called_once_with(1)
-    sock.sendto.assert_called_once_with(b'\x01foo.com', ('224.0.0.70', 5333))
+    sock.sendto.assert_called_once_with(b'\x01foo.com', mock.ANY)
+    sock.recvfrom.assert_called_once()
+
+# TODO: Coverage
+# Github actions
