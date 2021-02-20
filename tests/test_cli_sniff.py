@@ -24,3 +24,9 @@ def test_cli_sniff(socketclass_mock, cliapp):
     sock.settimeout.assert_not_called()
     sock.setsockopt.assert_any_call(
         socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mock.ANY)
+
+    # ctrl+c
+    sock.recvfrom.side_effect = KeyboardInterrupt
+    s, o, e = sniffcli()
+    assert s == 3
+    assert e == 'Terminated by user.\n'

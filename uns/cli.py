@@ -63,6 +63,7 @@ class Sniff(cli.SubCommand):
                 print(f'{addr}:{port} {VERBS.get(verb)}{name}')
         except KeyboardInterrupt:
             print('Terminated by user.', file=sys.stderr)
+            return 3
 
 
 class Find(cli.SubCommand):
