@@ -1,16 +1,11 @@
 import struct
 import socket
-import unittest
 
+
+from .constants import UDP_READSIZE, IGMP_ADDRESS, IGMP_PORT
 
 VERB_DISCOVER = 1
 VERB_ANSWER = 2
-
-
-GRP = '224.0.0.70'
-PORT = 5333
-TARGET = (GRP, PORT)
-READSIZE = 128
 
 
 def createsocket(timeout=None):
@@ -26,7 +21,7 @@ def createsocket(timeout=None):
 
 
 def readpacket(sock):
-    data, host = sock.recvfrom(READSIZE)
+    data, host = sock.recvfrom(UDP_READSIZE)
     return data[0], data[1:].decode(), host[0], host[1]
 
 
@@ -37,7 +32,10 @@ def createpacket(verb, data):
 
 def resolve(hostname, timeout):
     sock = createsocket(timeout)
-    sock.sendto(createpacket(VERB_DISCOVER, hostname), TARGET)
+    sock.sendto(
+        createpacket(VERB_DISCOVER, hostname),
+        (IGMP_ADDRESS, IGMP_PORT)
+    )
     while True:
         verb, name, addr, _ = readpacket(sock)
         if (verb == VERB_ANSWER) and (name == hostname):

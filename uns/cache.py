@@ -1,8 +1,8 @@
 """Simple file cache for UNS records."""
 import re
+from os import path
 
 
-DEFAULT_DBFILE = path.join(environ['HOME'], '.local', 'uns')
 IPPART_REGEX = r'\d{1,3}'
 IP_REGEX = r'.'.join([IPPART_REGEX] * 4)
 HOSTS_REGEX = r'[\w\s.]+'
@@ -64,5 +64,3 @@ class DB:
 
     def __exit__(self, ex, extype, tb):
         self.save()
-
-

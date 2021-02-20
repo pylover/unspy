@@ -10,6 +10,3 @@ def test_resolve(sockclass):
     sock.settimeout.assert_called_once_with(1)
     sock.sendto.assert_called_once_with(b'\x01foo.com', mock.ANY)
     sock.recvfrom.assert_called_once()
-
-# TODO: Coverage
-# Github actions
