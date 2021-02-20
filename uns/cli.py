@@ -1,8 +1,11 @@
+import sys
+import socket
 from os import path, environ
 
 import easycli as cli
 
 from .constants import IGMP_PORT, IGMP_ADDRESS
+from .protocol import resolve
 
 
 DEFAULT_DBFILE = path.join(environ['HOME'], '.local', 'uns')
@@ -96,17 +99,18 @@ class Resolve(cli.SubCommand):
                      help='Wait for response, default: 0'),
     ]
 
-#    def __call__(self, args):
-#        with DB(args.dbfile) as db:
-#            if args.no_cache:
-#                return self.online(db, args)
-#
-#            try:
-#                name, addr = db.resolve(args.hostname)
-#                printrecord(args, name, addr, True)
-#
-#            except KeyError:
-#                return self.online(db, args)
+    def __call__(self, args):
+        name, addr = resolve(args.hostname, timeout=args.timeout)
+        try:
+            printrecord(name, addr, False, short=args.short)
+            return 0
+        except socket.timeout:
+            if not args.short:
+                print(f'Timeout reached: {args.timeout}', file=sys.stderr)
+            return 1
+        except KeyboardInterrupt:
+            print('Terminated by user.', file=sys.stderr)
+            return 1
 
 
 class Sniff(cli.SubCommand):

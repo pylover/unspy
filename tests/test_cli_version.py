@@ -1,18 +1,14 @@
-from bddcli import Application, Given, status, stdout, given, when
-
-
-def test_cli_version():
+def test_cli_version(cliapp):
     from uns import __version__
-    app = Application('foo', 'uns.cli:UNS.quickstart')
 
-    with Given(app):
-        assert status == 0
-        assert stdout.startswith('usage: foo [-h] [-v]')
+    s, o, e = cliapp()
+    assert s == 0
+    assert o.startswith('usage: uns [-h] [-v]')
 
-        when(given + '--version')
-        assert status == 0
-        assert stdout.startswith(__version__)
+    s, o, e = cliapp('--version')
+    assert s == 0
+    assert o.startswith(__version__)
 
-        when(given + '-v')
-        assert status == 0
-        assert stdout.startswith(__version__)
+    s, o, e = cliapp('-v')
+    assert s == 0
+    assert o.startswith(__version__)

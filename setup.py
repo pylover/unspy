@@ -13,7 +13,7 @@ with open(join(dirname(__file__), 'uns', '__init__.py')) as v_file:
 
 
 dependencies = [
-    'easycli',
+    'easycli >= 1.7.3',
     'requests',
 ]
 
