@@ -5,7 +5,7 @@ from os import path, environ
 import easycli as cli
 
 from .constants import IGMP_PORT, IGMP_ADDRESS
-from .protocol import resolve
+from . import protocol, cache
 
 
 DEFAULT_DBFILE = path.join(environ['HOME'], '.local', 'uns')
@@ -86,33 +86,6 @@ class Find(cli.SubCommand):
 #            self.online(db, args)
 
 
-class Resolve(cli.SubCommand):
-    """Resolve an ip address by it's name."""
-
-    __command__ = 'resolve'
-    __aliases__ = ['r', 'd']
-    __arguments__ = [
-        cli.Argument('hostname'),
-        cli.Argument('--no-cache', action='store_true'),
-        cli.Argument('-s', '--short', action='store_true'),
-        cli.Argument('-t', '--timeout', type=int, default=0,
-                     help='Wait for response, default: 0'),
-    ]
-
-    def __call__(self, args):
-        name, addr = resolve(args.hostname, timeout=args.timeout)
-        try:
-            printrecord(name, addr, False, short=args.short)
-            return 0
-        except socket.timeout:
-            if not args.short:
-                print(f'Timeout reached: {args.timeout}', file=sys.stderr)
-            return 1
-        except KeyboardInterrupt:
-            print('Terminated by user.', file=sys.stderr)
-            return 1
-
-
 class Sniff(cli.SubCommand):
     """Sniff IGMP packets."""
 
@@ -133,6 +106,46 @@ class Sniff(cli.SubCommand):
 #                print(f'{addr}:{port} {name}')
 #        except KeyboardInterrupt:
 #            print('Terminated by user.', file=sys.stderr)
+
+
+class Resolve(cli.SubCommand):
+    """Resolve an ip address by it's name."""
+
+    __command__ = 'resolve'
+    __aliases__ = ['r', 'd']
+    __arguments__ = [
+        cli.Argument('hostname'),
+        cli.Argument('--nocache', action='store_true'),
+        cli.Argument('-s', '--short', action='store_true'),
+        cli.Argument('-t', '--timeout', type=int, default=0,
+                     help='Wait for response, default: 0'),
+    ]
+
+    def __call__(self, args):
+        resolve = protocol.resolve
+
+        if not args.nocache:
+            with cache.DB(args.dbfile) as cache_:
+                resolve = cache_(resolve)
+                name, addr, fromcache = \
+                    resolve(args.hostname, timeout=args.timeout)
+                printrecord(name, addr, fromcache, short=args.short)
+                return
+
+        # Searching network
+        try:
+            name, addr = resolve(args.hostname, timeout=args.timeout)
+        except socket.timeout:
+            if not args.short:
+                print(f'Timeout reached: {args.timeout}', file=sys.stderr)
+            return 1
+
+        except KeyboardInterrupt:
+            if not args.short:
+                print('Terminated by user.', file=sys.stderr)
+            return 1
+        else:
+            printrecord(name, addr, False, short=args.short)
 
 
 class UNS(cli.Root):

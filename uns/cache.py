@@ -1,8 +1,10 @@
 """Simple file cache for UNS records."""
 import re
+import functools
 from os import path
 
-
+# TODO: Remove regex check to be faster
+# TODO: Just split with space
 IPPART_REGEX = r'\d{1,3}'
 IP_REGEX = r'.'.join([IPPART_REGEX] * 4)
 HOSTS_REGEX = r'[\w\s.]+'
@@ -64,3 +66,17 @@ class DB:
 
     def __exit__(self, ex, extype, tb):
         self.save()
+
+    def __call__(self, resolver):
+        @functools.wraps(resolver)
+        def wrapper(name, *a, **k):
+            fromcache = True
+            try:
+                name, addr = self.resolve(name)
+            except KeyError:
+                name, addr = resolver(name, *a, **k)
+                fromcache = False
+
+            return name, addr, fromcache
+
+        return wrapper
