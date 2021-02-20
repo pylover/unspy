@@ -1,7 +1,9 @@
+import socket
 import functools
+from unittest import mock
 
 
-def test_cli_resolve_nocache(socketclass_mock, cliapp):
+def test_cli_sniff(socketclass_mock, cliapp):
     sniffcli = functools.partial(cliapp, 'sniff')
 
     sock = socketclass_mock.return_value
@@ -20,3 +22,5 @@ def test_cli_resolve_nocache(socketclass_mock, cliapp):
     socketclass_mock.assert_called_once()
     sock = socketclass_mock.return_value
     sock.settimeout.assert_not_called()
+    sock.setsockopt.assert_any_call(
+        socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mock.ANY)

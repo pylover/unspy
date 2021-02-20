@@ -27,7 +27,7 @@ def createpacket(verb, data):
     return header + data.encode()
 
 
-def resolve(hostname, timeout):
+def resolve(hostname, timeout=None):
     sock = createsocket(timeout)
     sock.sendto(
         createpacket(VERB_DISCOVER, hostname),
@@ -51,3 +51,15 @@ def sniff():
 
     while True:
         yield readpacket(sock)
+
+
+def find(pattern, timeout=None):
+    sock = createsocket(timeout)
+    sock.sendto(
+        createpacket(VERB_DISCOVER, pattern),
+        (IGMP_ADDRESS, IGMP_PORT)
+    )
+    while True:
+        verb, name, addr, _ = readpacket(sock)
+        if verb == VERB_ANSWER:
+            yield name, addr

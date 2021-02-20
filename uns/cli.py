@@ -48,44 +48,6 @@ class Answer(cli.SubCommand):
 #        sock.sendto(verb + answer.encode(), (args.address, args.port))
 
 
-class Find(cli.SubCommand):
-    """Find an ip address by it's name."""
-
-    __command__ = 'find'
-    __aliases__ = ['f']
-    __arguments__ = [
-        cli.Argument('pattern'),
-        cli.Argument('--no-cache', action='store_true'),
-        cli.Argument('-s', '--short', action='store_true'),
-        cli.Argument('-t', '--timeout', type=int, default=5,
-                     help='Seconds wait before exit, 0: infinite, default: 5'),
-    ]
-
-#    def online(self, db, args):
-#        sock = createsocket(args.timeout)
-#        discover = struct.pack('>B', VERB_DISCOVER)
-#        sock.sendto(discover + args.pattern.encode(), TARGET)
-#        try:
-#            while True:
-#                verb, name, addr, _ = readpacket(sock)
-#                db.append(addr, name)
-#                printrecord(args, name, addr, False)
-#        except socket.timeout:
-#            if not args.short:
-#                print(f'Timeout reached: {args.timeout}', file=sys.stderr)
-#                return
-#        except KeyboardInterrupt:
-#            print('Terminated by user.', file=sys.stderr)
-#
-#    def __call__(self, args):
-#        with DB(args.dbfile) as db:
-#            if not args.no_cache:
-#                for name, addr in db.find(args.pattern):
-#                    printrecord(args, name, addr, True)
-#
-#            self.online(db, args)
-
-
 class Sniff(cli.SubCommand):
     """Sniff IGMP packets."""
 
@@ -101,6 +63,40 @@ class Sniff(cli.SubCommand):
                 print(f'{addr}:{port} {VERBS.get(verb)}{name}')
         except KeyboardInterrupt:
             print('Terminated by user.', file=sys.stderr)
+
+
+class Find(cli.SubCommand):
+    """Find an ip address by it's name."""
+
+    __command__ = 'find'
+    __aliases__ = ['f']
+    __arguments__ = [
+        cli.Argument('pattern'),
+        cli.Argument('--nocache', action='store_true'),
+        cli.Argument('-s', '--short', action='store_true'),
+        cli.Argument('-t', '--timeout', type=int, default=5,
+                     help='Seconds wait before exit, 0: infinite, default: 5'),
+    ]
+
+    def __call__(self, args):
+        if not args.nocache:
+            with cache.DB(args.dbfile) as db:
+                for name, addr in db.find(args.pattern):
+                    printrecord(name, addr, True, short=args.short)
+
+        # Searching network
+        try:
+            for n, a in protocol.find(args.pattern, timeout=args.timeout):
+                printrecord(n, a, False, short=args.short)
+        except socket.timeout:
+            if not args.short:
+                print(f'Timeout reached: {args.timeout}', file=sys.stderr)
+            return 1
+
+        except KeyboardInterrupt:
+            if not args.short:
+                print('Terminated by user.', file=sys.stderr)
+            return 1
 
 
 class Resolve(cli.SubCommand):
