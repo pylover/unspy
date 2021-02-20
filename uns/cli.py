@@ -57,7 +57,7 @@ class Sniff(cli.SubCommand):
         print(f'Listening to {IGMP_ADDRESS}:{IGMP_PORT}')
         try:
             for verb, name, addr, port in protocol.sniff():
-                print(f'{addr}:{port} {VERBS.get(verb)}{name}')
+                print(f'{addr}:{port} {VERBS.get(verb)} {name}')
         except KeyboardInterrupt:
             print('Terminated by user.', file=sys.stderr)
             return 3

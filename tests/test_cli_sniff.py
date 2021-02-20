@@ -15,9 +15,9 @@ def test_cli_sniff(socketclass_mock, cliapp):
 
     s, o, e = sniffcli()
     assert o == '''Listening to 224.0.0.70:5333
-10.0.0.2:5333 discoverfoo.com
-10.0.0.2:5333 discoverbar.com
-10.0.0.1:3333 discoverfoo.com
+10.0.0.2:5333 discover foo.com
+10.0.0.2:5333 discover bar.com
+10.0.0.1:3333 discover foo.com
 '''
     socketclass_mock.assert_called_once()
     sock = socketclass_mock.return_value
