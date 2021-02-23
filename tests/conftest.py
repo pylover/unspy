@@ -1,4 +1,5 @@
 import sys
+import functools
 from unittest import mock
 
 import pytest
@@ -31,3 +32,23 @@ def cliapp(capsys):
         return status, stdout, stderr
 
     return wrapper
+
+
+@pytest.fixture
+def answercli(cliapp):
+    return functools.partial(cliapp, 'answer')
+
+
+@pytest.fixture
+def resolvecli(cliapp):
+    return functools.partial(cliapp, 'resolve')
+
+
+@pytest.fixture
+def sniffcli(cliapp):
+    return functools.partial(cliapp, 'sniff')
+
+
+@pytest.fixture
+def findcli(cliapp):
+    return functools.partial(cliapp, 'find')

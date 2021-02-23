@@ -1,8 +1,4 @@
-import functools
-
-
-def test_cli_answer(socketclass_mock, cliapp):
-    answercli = functools.partial(cliapp, 'answer')
+def test_cli_answer(socketclass_mock, answercli):
     sock = socketclass_mock.return_value
     s, o, e = answercli('h.foo')
     assert s == 0

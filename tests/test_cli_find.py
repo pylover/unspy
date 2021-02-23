@@ -1,5 +1,4 @@
 import socket
-import functools
 from unittest import mock
 
 
@@ -9,9 +8,7 @@ cachefile = '''
 '''
 
 
-def test_cli_find(socketclass_mock, cliapp):
-    findcli = functools.partial(cliapp, 'find')
-
+def test_cli_find(socketclass_mock, findcli):
     openmock = mock.mock_open(read_data=cachefile)
     with mock.patch('uns.cache.open', openmock), \
             mock.patch('os.path.exists') as existsmock:

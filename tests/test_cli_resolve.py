@@ -13,9 +13,7 @@ cachefile = '''
 '''
 
 
-def test_cli_resolve_cache(socketclass_mock, cliapp):
-    resolvecli = functools.partial(cliapp, 'resolve')
-
+def test_cli_resolve_cache(socketclass_mock, resolvecli):
     openmock = mock.mock_open(read_data=cachefile)
     with mock.patch('uns.cache.open', openmock), \
             mock.patch('os.path.exists') as existsmock:
@@ -58,8 +56,8 @@ def test_cli_resolve_cache(socketclass_mock, cliapp):
         assert e == 'Cannot parse: MalformedLine\n'
 
 
-def test_cli_resolve_nocache(socketclass_mock, cliapp):
-    nocache = functools.partial(cliapp, 'resolve', '--nocache')
+def test_cli_resolve_nocache(socketclass_mock, resolvecli):
+    nocache = functools.partial(resolvecli, '--nocache')
 
     s, o, e = nocache('foo.com')
     assert e == ''
@@ -83,19 +81,18 @@ def test_cli_resolve_nocache(socketclass_mock, cliapp):
     assert o == '10.0.0.2\n'
 
 
-def test_cli_resolve_timeout(socketclass_mock, cliapp):
-    resolve = functools.partial(cliapp, 'resolve')
+def test_cli_resolve_timeout(socketclass_mock, resolvecli):
     sock = socketclass_mock.return_value
 
     # timeout
     sock.recvfrom.side_effect = socket.timeout
-    s, o, e = resolve('h.', '-t 8', '--nocache')
+    s, o, e = resolvecli('h.', '-t 8', '--nocache')
     assert e == 'Timeout reached: 8.\n'
     assert s == 2
 
     # ctrl+c
     sock.recvfrom.side_effect = KeyboardInterrupt
-    s, o, e = resolve('h.', '--nocache')
+    s, o, e = resolvecli('h.', '--nocache')
     assert s == 3
     assert e == 'Terminated by user.\n'
 

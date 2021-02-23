@@ -1,11 +1,8 @@
 import socket
-import functools
 from unittest import mock
 
 
-def test_cli_sniff(socketclass_mock, cliapp):
-    sniffcli = functools.partial(cliapp, 'sniff')
-
+def test_cli_sniff(socketclass_mock, sniffcli):
     sock = socketclass_mock.return_value
     sock.recvfrom.side_effect = [
         (b'\x01foo.com', ('10.0.0.2', 5333)),
