@@ -13,7 +13,7 @@ with open(join(dirname(__file__), 'uns', '__init__.py')) as v_file:
 
 
 dependencies = [
-    'easycli >= 1.7.3',
+    'easycli >= 1.8.0',
     'requests',
 ]
 
@@ -25,6 +25,8 @@ setup(
     install_requires=dependencies,
     include_package_data=True,
     license='MIT',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     entry_points={
         'console_scripts': [
             'uns = uns.cli:UNS.quickstart',
