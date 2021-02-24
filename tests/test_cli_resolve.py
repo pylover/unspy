@@ -37,7 +37,8 @@ def test_cli_resolve_cache(socketclass_mock, resolvecli):
         assert s == 5
         assert o == ''
 
-        openmock.reset_mock()
+        # Only found in network
+        socketclass_mock.reset_mock()
         s, o, e = resolvecli('foo.com')
         assert e == ''
         assert o == '10.0.0.2 foo.com\n'
@@ -50,6 +51,41 @@ def test_cli_resolve_cache(socketclass_mock, resolvecli):
         openmock.return_value.write.assert_has_calls([
             mock.call('10.0.0.3 bar.com\n'),
             mock.call('10.0.0.2 foo.com\n'),
+        ])
+
+        # Invalidate, force resolve
+        openmock.reset_mock()
+        socketclass_mock.reset_mock()
+        sock = socketclass_mock.return_value
+        sock.recvfrom.return_value = b'\x02bar.com', ('10.0.0.9', 5333)
+        s, o, e = resolvecli('bar.com', '--forceresolve')
+        assert e == ''
+        assert s == 0
+        assert o == '10.0.0.9 bar.com\n'
+        socketclass_mock.assert_called_once()
+        sock.settimeout.assert_called_once()
+        sock.sendto.assert_called_once()
+        sock.recvfrom.assert_called_once()
+        openmock.return_value.write.assert_has_calls([
+            mock.call('10.0.0.9 bar.com\n'),
+        ])
+
+        # Invalidate an unexistance hostname
+        openmock.reset_mock()
+        socketclass_mock.reset_mock()
+        sock = socketclass_mock.return_value
+        sock.recvfrom.return_value = b'\x02baz.com', ('10.0.0.7', 5333)
+        s, o, e = resolvecli('baz.com', '--forceresolve')
+        assert e == ''
+        assert s == 0
+        assert o == '10.0.0.7 baz.com\n'
+        socketclass_mock.assert_called_once()
+        sock.settimeout.assert_called_once()
+        sock.sendto.assert_called_once()
+        sock.recvfrom.assert_called_once()
+        openmock.return_value.write.assert_has_calls([
+            mock.call('10.0.0.3 bar.com\n'),
+            mock.call('10.0.0.7 baz.com\n'),
         ])
 
 

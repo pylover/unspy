@@ -103,12 +103,20 @@ class Resolve(cli.SubCommand):
             action='store_true',
             help='Do not resolve the name over network.'
         ),
+        cli.Argument(
+            '-f', '--forceresolve',
+            action='store_true',
+            help='Force to resolve the name over network and update cache.'
+        ),
         short_arg,
         timeout_arg,
     ]
 
     def __call__(self, args):
         with cache.DB(args.dbfile) as db:
+            if args.forceresolve:
+                db.invalidate(args.hostname)
+
             addr, cached = db.getaddr(
                 args.hostname,
                 resolve=not args.noresolve,

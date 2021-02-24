@@ -54,8 +54,9 @@ class DB:
     def invalidate(self, hostname):
         addr = self._names.get(hostname)
         if not addr:
-            raise KeyError(f'Cannot find: {hostname}')
+            return
 
+        del self._names[hostname]
         del self._db[addr]
 
     def find(self, pattern):
