@@ -36,8 +36,8 @@ def test_cli_find(socketclass_mock, findcli):
         # timeout
         sock.recvfrom.side_effect = socket.timeout
         s, o, e = findcli('h.')
+        assert e == 'Timeout reached.\n'
         assert s == 2
-        assert e == 'Timeout reached: 5.\n'
 
         # ctrl+c
         sock.recvfrom.side_effect = KeyboardInterrupt

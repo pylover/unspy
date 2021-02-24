@@ -88,23 +88,8 @@ class Find(cli.SubCommand):
                     printrecord(name, addr, True, short=args.short)
 
         # Searching network
-        try:
-            for n, a in protocol.find(args.pattern, timeout=args.timeout):
-                printrecord(n, a, False, short=args.short)
-
-        except socket.timeout:
-            if not args.short:
-                print(f'Timeout reached: {args.timeout}.', file=sys.stderr)
-            return 2
-
-        except KeyboardInterrupt:
-            if not args.short:
-                print('Terminated by user.', file=sys.stderr)
-            return 3
-
-        except cache.InvalidDBFileError as ex:
-            print(f'Invalid input file: {ex}', file=sys.stderr)
-            return 4
+        for n, a in protocol.find(args.pattern, timeout=args.timeout):
+            printrecord(n, a, False, short=args.short)
 
 
 class Resolve(cli.SubCommand):
@@ -119,28 +104,12 @@ class Resolve(cli.SubCommand):
     ]
 
     def __call__(self, args):
-        try:
-            with cache.DB(args.dbfile) as db:
-                addr, cached = db.getaddr(
-                    args.hostname,
-                    resolve=True,
-                    resolvetimeout=args.timeout,
-                )
-        except socket.timeout:
-            if not args.short:
-                print(f'Timeout reached: {args.timeout}.', file=sys.stderr)
-            return 2
-
-        except KeyboardInterrupt:
-            if not args.short:
-                print('Terminated by user.', file=sys.stderr)
-            return 3
-
-        except cache.InvalidDBFileError as ex:
-            print(f'Invalid input file: {ex}', file=sys.stderr)
-            return 4
-
-        else:
+        with cache.DB(args.dbfile) as db:
+            addr, cached = db.getaddr(
+                args.hostname,
+                resolve=True,
+                resolvetimeout=args.timeout,
+            )
             printrecord(args.hostname, addr, cached, short=args.short)
 
 
@@ -161,6 +130,21 @@ class UNS(cli.Root):
         Sniff,
         Find,
     ]
+
+    def main(self, *a, **k):
+        try:
+            return super().main(*a, **k)
+        except socket.timeout:
+            print(f'Timeout reached.', file=sys.stderr)
+            return 2
+
+        except KeyboardInterrupt:
+            print('Terminated by user.', file=sys.stderr)
+            return 3
+
+        except cache.InvalidDBFileError as ex:
+            print(f'Invalid input file: {ex}', file=sys.stderr)
+            return 4
 
     def __call__(self, args):
         if args.version:

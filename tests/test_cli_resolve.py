@@ -58,7 +58,7 @@ def test_cli_resolve_timeout(socketclass_mock, resolvecli):
     # timeout
     sock.recvfrom.side_effect = socket.timeout
     s, o, e = resolvecli('h.', '-t 8')
-    assert e == 'Timeout reached: 8.\n'
+    assert e == 'Timeout reached.\n'
     assert s == 2
 
     # ctrl+c
