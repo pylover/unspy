@@ -16,6 +16,9 @@ timeout_arg = cli.Argument(
 )
 
 
+nocache_arg = cli.Argument('--nocache', action='store_true')
+
+
 def printrecord(name, addr, cache, short=False):
     if short:
         print(addr)
@@ -125,6 +128,19 @@ class Resolve(cli.SubCommand):
         printrecord(args.hostname, addr, cached, short=args.short)
 
 
+class HTTP(cli.SubCommand):
+    """Send HTTP request to a UNS host."""
+
+    __command__ = 'http'
+    __aliases__ = ['h']
+    __arguments__ = [
+        cli.Argument('hostname'),
+    ]
+
+    def __call__(self, args):
+        pass
+
+
 class UNS(cli.Root):
     """UNS root command line handler."""
 
@@ -141,6 +157,7 @@ class UNS(cli.Root):
         Answer,
         Sniff,
         Find,
+        HTTP,
     ]
 
     def main(self, *a, **k):
