@@ -25,6 +25,18 @@ def test_cli_resolve_cache(socketclass_mock, resolvecli):
         sock.recvfrom.assert_not_called()
         openmock.return_value.write.assert_not_called()
 
+        # Short result
+        s, o, e = resolvecli('bar.com', '--short')
+        assert e == ''
+        assert s == 0
+        assert o == '10.0.0.3\n'
+
+        # Not found!
+        s, o, e = resolvecli('not.found', '--noresolve')
+        assert e == 'Cannot find: not.found.\n'
+        assert s == 5
+        assert o == ''
+
         openmock.reset_mock()
         s, o, e = resolvecli('foo.com')
         assert e == ''

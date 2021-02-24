@@ -7,7 +7,6 @@ from .constants import IGMP_PORT, IGMP_ADDRESS, VERBS, DEFAULT_DBFILE
 from . import protocol, cache
 
 
-nocache_arg = cli.Argument('--nocache', action='store_true')
 short_arg = cli.Argument('-s', '--short', action='store_true')
 timeout_arg = cli.Argument(
     '-t', '--timeout',
@@ -76,7 +75,7 @@ class Find(cli.SubCommand):
     __aliases__ = ['f']
     __arguments__ = [
         cli.Argument('pattern'),
-        nocache_arg,
+        cli.Argument('--nocache', action='store_true'),
         short_arg,
         timeout_arg,
     ]
@@ -99,6 +98,11 @@ class Resolve(cli.SubCommand):
     __aliases__ = ['r', 'd']
     __arguments__ = [
         cli.Argument('hostname'),
+        cli.Argument(
+            '--noresolve',
+            action='store_true',
+            help='Do not resolve the name over network.'
+        ),
         short_arg,
         timeout_arg,
     ]
@@ -107,7 +111,7 @@ class Resolve(cli.SubCommand):
         with cache.DB(args.dbfile) as db:
             addr, cached = db.getaddr(
                 args.hostname,
-                resolve=True,
+                resolve=not args.noresolve,
                 resolvetimeout=args.timeout,
             )
             printrecord(args.hostname, addr, cached, short=args.short)
@@ -135,7 +139,7 @@ class UNS(cli.Root):
         try:
             return super().main(*a, **k)
         except socket.timeout:
-            print(f'Timeout reached.', file=sys.stderr)
+            print('Timeout reached.', file=sys.stderr)
             return 2
 
         except KeyboardInterrupt:
@@ -145,6 +149,10 @@ class UNS(cli.Root):
         except cache.InvalidDBFileError as ex:
             print(f'Invalid input file: {ex}', file=sys.stderr)
             return 4
+
+        except cache.HostNotFoundError as ex:
+            print(f'Cannot find: {ex}.', file=sys.stderr)
+            return 5
 
     def __call__(self, args):
         if args.version:

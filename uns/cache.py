@@ -1,7 +1,6 @@
 """Simple file cache for UNS records."""
 from os import path
 
-from .constants import DEFAULT_DBFILE
 from . import protocol
 
 
@@ -9,10 +8,12 @@ class InvalidDBFileError(Exception):
     pass
 
 
+class HostNotFoundError(Exception):
+    pass
+
+
 class DB:
     """Simple database for UNS records."""
-
-    _defaultinstance = None
 
     def __init__(self, filename):
         self.filename = filename
@@ -48,12 +49,12 @@ class DB:
             self.set(addr, hostname, True)
             return addr, False
 
-        raise KeyError('Cannot find: %s', hostname)
+        raise HostNotFoundError(hostname)
 
     def invalidate(self, hostname):
         addr = self._names.get(hostname)
         if not addr:
-            raise KeyError('Cannot find: %s', hostname)
+            raise KeyError(f'Cannot find: {hostname}')
 
         del self._db[addr]
 
@@ -76,10 +77,3 @@ class DB:
     def __exit__(self, ex, extype, tb):
         if self._dirty:
             self.save()
-
-    @classmethod
-    def getdefault(cls):
-        if cls._defaultinstance is None:
-            cls._defaultinstance = cls(DEFAULT_DBFILE)
-
-        return cls._defaultinstance
