@@ -6,8 +6,9 @@ import pytest
 from uns.protocol import resolve
 
 
-def test_resolve(socketclass_mock):
-    resolve('foo.com', 1)
+def test_protocol_resolve(socketclass_mock):
+    addr = resolve('foo.com', 1)
+    assert addr == '10.0.0.2'
     socketclass_mock.assert_called_once()
     sock = socketclass_mock.return_value
     sock.settimeout.assert_called_once_with(1)

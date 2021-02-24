@@ -1,83 +1,85 @@
 """Simple file cache for UNS records."""
-import re
-import functools
 from os import path
 
-# TODO: Remove regex check to be faster
-# TODO: Just split with space
-IPPART_REGEX = r'\d{1,3}'
-IP_REGEX = r'.'.join([IPPART_REGEX] * 4)
-HOSTS_REGEX = r'[\w\s.]+'
+from .constants import DEFAULT_DBFILE
+from . import protocol
+
+
+class InvalidDBFileError(Exception):
+    pass
 
 
 class DB:
     """Simple database for UNS records."""
 
-    linepattern = re.compile(fr'({IP_REGEX})[\s\t]+({HOSTS_REGEX})')
-    ignorepattern = re.compile(r'^[\s#]')
+    _defaultinstance = None
 
     def __init__(self, filename):
         self.filename = filename
         self._db = {}
         self._names = {}
+        self._dirty = False
+        self.load()
 
-    def append(self, addr, *hosts):
-        self._db[addr] = hosts
-        for h in hosts:
-            self._names[h] = addr
+    def set(self, addr, hostname, dirty=True):
+        self._db[addr] = hostname
+        self._names[hostname] = addr
+        self._dirty = dirty
 
-    def parseline(self, l):
-        if self.ignorepattern.match(l):
-            return
-
-        m = self.linepattern.match(l)
-        if not m:
-            raise ValueError(f'Cannot parse: {l}')
-
-        addr, hosts = m.groups()
-        hosts = hosts.strip().split(' ')
-        self.append(addr, *hosts)
+    def _parseline(self, l):
+        try:
+            addr, hostname = l.strip().split(' ')
+            self.set(addr, hostname, False)
+        except ValueError:
+            raise InvalidDBFileError(self.filename)
 
     def save(self):
         with open(self.filename, 'w') as f:
             for addr, hosts in self._db.items():
-                f.write(f'{addr} {" ".join(hosts)}\n')
+                f.write(f'{addr} {hosts}\n')
 
-    def resolve(self, hostname):
+    def getaddr(self, hostname, resolve=True, resolvetimeout=None):
+        addr = self._names.get(hostname)
+        if addr:
+            return addr, True
+
+        if resolve:
+            addr = protocol.resolve(hostname, resolvetimeout)
+            self.set(addr, hostname, True)
+            return addr, False
+
+        raise KeyError('Cannot find: %s', hostname)
+
+    def invalidate(self, hostname):
         addr = self._names.get(hostname)
         if not addr:
             raise KeyError('Cannot find: %s', hostname)
 
-        return hostname, addr
+        del self._db[addr]
 
     def find(self, pattern):
-        for addr, hosts in self._db.items():
-            for h in hosts:
-                if h.startswith(pattern):
-                    yield h, addr
+        for addr, host in self._db.items():
+            if host.startswith(pattern):
+                yield host, addr
+
+    def load(self):
+        if not path.exists(self.filename):
+            return
+
+        with open(self.filename) as f:
+            for l in f:
+                self._parseline(l)
 
     def __enter__(self):
-        if path.exists(self.filename):
-            with open(self.filename) as f:
-                for l in f:
-                    self.parseline(l)
-
         return self
 
     def __exit__(self, ex, extype, tb):
-        self.save()
+        if self._dirty:
+            self.save()
 
-    def __call__(self, resolver):
-        @functools.wraps(resolver)
-        def wrapper(name, *a, **k):
-            try:
-                name, addr = self.resolve(name)
-                fromcache = True
-            except KeyError:
-                name, addr = resolver(name, *a, **k)
-                fromcache = False
-                self.append(addr, name)
+    @classmethod
+    def getdefault(cls):
+        if cls._defaultinstance is None:
+            cls._defaultinstance = cls(DEFAULT_DBFILE)
 
-            return name, addr, fromcache
-
-        return wrapper
+        return cls._defaultinstance

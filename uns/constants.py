@@ -1,3 +1,6 @@
+import os
+
+
 IGMP_ADDRESS = '224.0.0.70'
 IGMP_PORT = 5333
 
@@ -10,3 +13,6 @@ VERBS = {
     VERB_DISCOVER: 'discover',
     VERB_ANSWER: 'answer'
 }
+
+
+DEFAULT_DBFILE = os.path.join(os.environ['HOME'], '.cache', 'uns')

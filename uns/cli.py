@@ -1,14 +1,20 @@
 import sys
 import socket
-from os import path, environ
 
 import easycli as cli
 
-from .constants import IGMP_PORT, IGMP_ADDRESS, VERBS
+from .constants import IGMP_PORT, IGMP_ADDRESS, VERBS, DEFAULT_DBFILE
 from . import protocol, cache
 
 
-DEFAULT_DBFILE = path.join(environ['HOME'], '.local', 'uns')
+nocache_arg = cli.Argument('--nocache', action='store_true')
+short_arg = cli.Argument('-s', '--short', action='store_true')
+timeout_arg = cli.Argument(
+    '-t', '--timeout',
+    type=int,
+    default=5,
+    help='Seconds wait before exit, 0: infinite, default: 5'
+)
 
 
 def printrecord(name, addr, cache, short=False):
@@ -70,10 +76,9 @@ class Find(cli.SubCommand):
     __aliases__ = ['f']
     __arguments__ = [
         cli.Argument('pattern'),
-        cli.Argument('--nocache', action='store_true'),
-        cli.Argument('-s', '--short', action='store_true'),
-        cli.Argument('-t', '--timeout', type=int, default=5,
-                     help='Seconds wait before exit, 0: infinite, default: 5'),
+        nocache_arg,
+        short_arg,
+        timeout_arg,
     ]
 
     def __call__(self, args):
@@ -86,6 +91,7 @@ class Find(cli.SubCommand):
         try:
             for n, a in protocol.find(args.pattern, timeout=args.timeout):
                 printrecord(n, a, False, short=args.short)
+
         except socket.timeout:
             if not args.short:
                 print(f'Timeout reached: {args.timeout}.', file=sys.stderr)
@@ -95,6 +101,10 @@ class Find(cli.SubCommand):
             if not args.short:
                 print('Terminated by user.', file=sys.stderr)
             return 3
+
+        except cache.InvalidDBFileError as ex:
+            print(f'Invalid input file: {ex}', file=sys.stderr)
+            return 4
 
 
 class Resolve(cli.SubCommand):
@@ -104,26 +114,18 @@ class Resolve(cli.SubCommand):
     __aliases__ = ['r', 'd']
     __arguments__ = [
         cli.Argument('hostname'),
-        cli.Argument('--nocache', action='store_true'),
-        cli.Argument('-s', '--short', action='store_true'),
-        cli.Argument('-t', '--timeout', type=int, default=0,
-                     help='Wait for response, default: 0'),
+        short_arg,
+        timeout_arg,
     ]
 
     def __call__(self, args):
-        resolve = protocol.resolve
-
-        if not args.nocache:
-            with cache.DB(args.dbfile) as cache_:
-                resolve = cache_(resolve)
-                name, addr, fromcache = \
-                    resolve(args.hostname, timeout=args.timeout)
-                printrecord(name, addr, fromcache, short=args.short)
-                return
-
-        # Searching network
         try:
-            name, addr = resolve(args.hostname, timeout=args.timeout)
+            with cache.DB(args.dbfile) as db:
+                addr, cached = db.getaddr(
+                    args.hostname,
+                    resolve=True,
+                    resolvetimeout=args.timeout,
+                )
         except socket.timeout:
             if not args.short:
                 print(f'Timeout reached: {args.timeout}.', file=sys.stderr)
@@ -133,8 +135,13 @@ class Resolve(cli.SubCommand):
             if not args.short:
                 print('Terminated by user.', file=sys.stderr)
             return 3
+
+        except cache.InvalidDBFileError as ex:
+            print(f'Invalid input file: {ex}', file=sys.stderr)
+            return 4
+
         else:
-            printrecord(name, addr, False, short=args.short)
+            printrecord(args.hostname, addr, cached, short=args.short)
 
 
 class UNS(cli.Root):

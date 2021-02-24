@@ -36,7 +36,7 @@ def resolve(hostname, timeout=None):
     while True:
         verb, name, addr, _ = readpacket(sock)
         if (verb == VERB_ANSWER) and (name == hostname):
-            return name, addr
+            return addr
 
 
 def sniff():

@@ -16,6 +16,15 @@ def socketclass_mock():
 
 
 @pytest.fixture
+def requests_mock():
+    with mock.patch('requests.request') as m:
+        response = m.return_value
+        response.text = 'bar'
+        response.status_code = 200
+        yield m
+
+
+@pytest.fixture
 def cliapp(capsys):
 
     def wrapper(*args):
@@ -52,3 +61,8 @@ def sniffcli(cliapp):
 @pytest.fixture
 def findcli(cliapp):
     return functools.partial(cliapp, 'find')
+
+
+@pytest.fixture
+def httpcli(cliapp):
+    return functools.partial(cliapp, 'http')

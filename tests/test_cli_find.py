@@ -2,7 +2,7 @@ import socket
 from unittest import mock
 
 
-cachefile = '''
+cachefile = '''\
 10.0.0.1 h.foo
 10.0.0.6 h.qux
 '''

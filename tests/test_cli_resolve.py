@@ -1,14 +1,9 @@
 import socket
-import functools
 
 from unittest import mock
 
 
-cachefile = '''
-#commented line
-
- this is another way to comment a line
-
+cachefile = '''\
 10.0.0.3 bar.com
 '''
 
@@ -28,16 +23,16 @@ def test_cli_resolve_cache(socketclass_mock, resolvecli):
         sock.settimeout.assert_not_called()
         sock.sendto.assert_not_called()
         sock.recvfrom.assert_not_called()
-        openmock.return_value.write.assert_called_with('10.0.0.3 bar.com\n')
+        openmock.return_value.write.assert_not_called()
 
         openmock.reset_mock()
         s, o, e = resolvecli('foo.com')
         assert e == ''
-        assert s == 0
         assert o == '10.0.0.2 foo.com\n'
+        assert s == 0
         socketclass_mock.assert_called_once()
         sock = socketclass_mock.return_value
-        sock.settimeout.assert_not_called()
+        sock.settimeout.assert_called_once()
         sock.sendto.assert_called_once_with(b'\x01foo.com', mock.ANY)
         sock.recvfrom.assert_called_once()
         openmock.return_value.write.assert_has_calls([
@@ -45,40 +40,16 @@ def test_cli_resolve_cache(socketclass_mock, resolvecli):
             mock.call('10.0.0.2 foo.com\n'),
         ])
 
-    # When file is invalid
+
+def test_cli_resolve_cache_invalid_file(socketclass_mock, resolvecli):
     openmock = mock.mock_open(read_data='MalformedLine')
     with mock.patch('uns.cache.open', openmock), \
             mock.patch('os.path.exists') as existsmock:
         existsmock.return_value = True
         s, o, e = resolvecli('foo.com')
-        assert s == 1
+        assert e.startswith('Invalid input file: ')
         assert o == ''
-        assert e == 'Cannot parse: MalformedLine\n'
-
-
-def test_cli_resolve_nocache(socketclass_mock, resolvecli):
-    nocache = functools.partial(resolvecli, '--nocache')
-
-    s, o, e = nocache('foo.com')
-    assert e == ''
-    assert s == 0
-    assert o == '10.0.0.2 foo.com\n'
-    socketclass_mock.assert_called_once()
-    sock = socketclass_mock.return_value
-    sock.settimeout.assert_not_called()
-    sock.sendto.assert_called_once_with(b'\x01foo.com', mock.ANY)
-    sock.recvfrom.assert_called_once()
-
-    # Missing argument
-    s, o, e = nocache()
-    assert e.startswith('usage: uns resolve [-h]')
-    assert s == 1
-    assert o == ''
-
-    # Short result
-    s, o, e = nocache('--short', 'foo.com')
-    assert s == 0
-    assert o == '10.0.0.2\n'
+        assert s == 4
 
 
 def test_cli_resolve_timeout(socketclass_mock, resolvecli):
@@ -86,15 +57,15 @@ def test_cli_resolve_timeout(socketclass_mock, resolvecli):
 
     # timeout
     sock.recvfrom.side_effect = socket.timeout
-    s, o, e = resolvecli('h.', '-t 8', '--nocache')
+    s, o, e = resolvecli('h.', '-t 8')
     assert e == 'Timeout reached: 8.\n'
     assert s == 2
 
     # ctrl+c
     sock.recvfrom.side_effect = KeyboardInterrupt
-    s, o, e = resolvecli('h.', '--nocache')
-    assert s == 3
+    s, o, e = resolvecli('h.')
     assert e == 'Terminated by user.\n'
+    assert s == 3
 
 
 if __name__ == '__main__':
