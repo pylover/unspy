@@ -1,22 +1,40 @@
 import sys
 import socket
+import functools
 
 import easycli as cli
 
 from .constants import IGMP_PORT, IGMP_ADDRESS, VERBS, DEFAULT_DBFILE
 from . import protocol, cache, resolve
 
-
-short_arg = cli.Argument('-s', '--short', action='store_true')
-timeout_arg = cli.Argument(
-    '-t', '--timeout',
+hostname_arg = functools.partial(cli.Argument, 'hostname')
+nocache_arg = functools.partial(cli.Argument, '--nocache', action='store_true')
+short_arg = functools.partial(
+    cli.Argument,
+    '-s',
+    '--short',
+    action='store_true'
+)
+timeout_arg = functools.partial(
+    cli.Argument,
+    '-t',
+    '--timeout',
     type=int,
     default=5,
     help='Seconds wait before exit, 0: infinite, default: 5'
 )
-
-
-nocache_arg = cli.Argument('--nocache', action='store_true')
+noresolve_arg = functools.partial(
+    cli.Argument,
+    '--noresolve',
+    action='store_true',
+    help='Do not resolve the name over network.'
+)
+forceresolve_arg = functools.partial(
+    cli.Argument,
+    '-f', '--forceresolve',
+    action='store_true',
+    help='Force to resolve the name over network and update cache.'
+)
 
 
 def printrecord(name, addr, cache, short=False):
@@ -34,7 +52,7 @@ class Answer(cli.SubCommand):
     __command__ = 'answer'
     __aliases__ = ['a', 'ans']
     __arguments__ = [
-        cli.Argument('hostname', default=IGMP_ADDRESS),
+        hostname_arg(default=IGMP_ADDRESS),
         cli.Argument(
             '-a', '--address',
             default=IGMP_ADDRESS,
@@ -78,9 +96,9 @@ class Find(cli.SubCommand):
     __aliases__ = ['f']
     __arguments__ = [
         cli.Argument('pattern'),
-        cli.Argument('--nocache', action='store_true'),
-        short_arg,
-        timeout_arg,
+        nocache_arg(),
+        short_arg(),
+        timeout_arg(),
     ]
 
     def __call__(self, args):
@@ -100,21 +118,13 @@ class Resolve(cli.SubCommand):
     __command__ = 'resolve'
     __aliases__ = ['r', 'd']
     __arguments__ = [
-        cli.Argument('hostname'),
+        hostname_arg(),
         cli.Mutex(
-            cli.Argument(
-                '--noresolve',
-                action='store_true',
-                help='Do not resolve the name over network.'
-            ),
-            cli.Argument(
-                '-f', '--forceresolve',
-                action='store_true',
-                help='Force to resolve the name over network and update cache.'
-            ),
+            noresolve_arg(),
+            forceresolve_arg(),
         ),
-        short_arg,
-        timeout_arg,
+        short_arg(),
+        timeout_arg(),
     ]
 
     def __call__(self, args):
@@ -134,7 +144,7 @@ class HTTP(cli.SubCommand):
     __command__ = 'http'
     __aliases__ = ['h']
     __arguments__ = [
-        cli.Argument('hostname'),
+
     ]
 
     def __call__(self, args):
