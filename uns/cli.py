@@ -4,7 +4,7 @@ import socket
 import easycli as cli
 
 from .constants import IGMP_PORT, IGMP_ADDRESS, VERBS, DEFAULT_DBFILE
-from . import protocol, cache
+from . import protocol, cache, resolve
 
 
 short_arg = cli.Argument('-s', '--short', action='store_true')
@@ -115,16 +115,14 @@ class Resolve(cli.SubCommand):
     ]
 
     def __call__(self, args):
-        with cache.DB(args.dbfile) as db:
-            if args.forceresolve:
-                db.invalidate(args.hostname)
-
-            addr, cached = db.getaddr(
-                args.hostname,
-                resolve=not args.noresolve,
-                resolvetimeout=args.timeout,
-            )
-            printrecord(args.hostname, addr, cached, short=args.short)
+        addr, cached = resolve(
+            args.hostname,
+            args.timeout,
+            args.forceresolve,
+            args.noresolve,
+            args.dbfile
+        )
+        printrecord(args.hostname, addr, cached, short=args.short)
 
 
 class UNS(cli.Root):
