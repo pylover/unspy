@@ -3,16 +3,17 @@ import requests
 
 def request(verb, url='/', form=None, query=None):
     kw = {}
-    headers = {}
+    headers = kw.setdefault('headers', {})
 
     if form:
         kw['data'] = form
 
-    kw['headers'] = headers
-    response = requests.request(
-        verb.upper(),
-        url,
-        **kw
-    )
+    if query:
+        kw['params'] = query
+
+    if form:
+        kw['data'] = form
+
+    response = requests.request(verb, url, **kw)
 
     return response

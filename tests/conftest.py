@@ -8,6 +8,20 @@ from uns.cli import UNS
 
 
 @pytest.fixture
+def dbfile_mock():
+    dbfile = mock.mock_open(read_data='10.0.0.3 bar.com\n')
+    with mock.patch('uns.cache.open', dbfile) as m:
+        yield m
+
+
+@pytest.fixture
+def badfile_mock():
+    dbfile = mock.mock_open(read_data='Malformed\n')
+    with mock.patch('uns.cache.open', dbfile) as m:
+        yield m
+
+
+@pytest.fixture
 def socketclass_mock():
     with mock.patch('socket.socket') as m:
         s = m.return_value

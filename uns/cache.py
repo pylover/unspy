@@ -65,12 +65,10 @@ class DB:
                 yield host, addr
 
     def load(self):
-        if not path.exists(self.filename):
-            return
-
-        with open(self.filename) as f:
-            for l in f:
-                self._parseline(l)
+        if path.exists(self.filename):
+            with open(self.filename) as f:
+                for l in f:
+                    self._parseline(l)
 
     def __enter__(self):
         return self

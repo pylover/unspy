@@ -4,11 +4,15 @@ import functools
 
 import easycli as cli
 
-from .constants import IGMP_PORT, IGMP_ADDRESS, VERBS, DEFAULT_DBFILE
-from . import protocol, cache, resolve
+from .constants import IGMP_PORT, IGMP_ADDRESS, VERBS, DEFAULT_DBFILE, \
+    DEFAULT_TIMEOUT
+from . import protocol, cache, resolve, http
+
 
 hostname_arg = functools.partial(cli.Argument, 'hostname')
 nocache_arg = functools.partial(cli.Argument, '--nocache', action='store_true')
+address_arg = functools.partial(cli.Argument, '-a', '--address')
+port_arg = functools.partial(cli.Argument, '-p', '--port', type=int)
 short_arg = functools.partial(
     cli.Argument,
     '-s',
@@ -20,8 +24,8 @@ timeout_arg = functools.partial(
     '-t',
     '--timeout',
     type=int,
-    default=5,
-    help='Seconds wait before exit, 0: infinite, default: 5'
+    default=DEFAULT_TIMEOUT,
+    help=f'Seconds wait before exit, 0: infinite, default: {DEFAULT_TIMEOUT}'
 )
 noresolve_arg = functools.partial(
     cli.Argument,
@@ -53,17 +57,8 @@ class Answer(cli.SubCommand):
     __aliases__ = ['a', 'ans']
     __arguments__ = [
         hostname_arg(default=IGMP_ADDRESS),
-        cli.Argument(
-            '-a', '--address',
-            default=IGMP_ADDRESS,
-            help=f'Default: {IGMP_ADDRESS}'
-        ),
-        cli.Argument(
-            '-p', '--port',
-            default=IGMP_PORT,
-            type=int,
-            help=f'Default: {IGMP_PORT}'
-        ),
+        address_arg(default=IGMP_ADDRESS, help=f'Default: {IGMP_PORT}'),
+        port_arg(default=IGMP_PORT, help=f'Default: {IGMP_ADDRESS}'),
     ]
 
     def __call__(self, args):
@@ -144,11 +139,60 @@ class HTTP(cli.SubCommand):
     __command__ = 'http'
     __aliases__ = ['h']
     __arguments__ = [
+        cli.Mutex(
+            noresolve_arg(),
+            forceresolve_arg(),
+        ),
+        timeout_arg(),
+        cli.Argument('verb'),
+        cli.Argument('url'),
+        cli.Argument(
+            'fields',
+            metavar='[?]NAME=VALUE',
+            default=[],
+            nargs='*'
+        )
 
     ]
 
     def __call__(self, args):
-        pass
+        fields = []
+        query = []
+        body = ''
+        urlparts = args.url.split('/')
+        addr, _ = resolve(
+            urlparts[0],
+            args.timeout,
+            args.forceresolve,
+            args.noresolve,
+            args.dbfile
+        )
+        if len(urlparts) > 1:
+            path_ = '/' + '/'.join(urlparts[1:])
+        else:
+            path_ = ''
+
+        # Fields
+        for f in args.fields:
+            if '=' not in f:
+                body = ' '.join(args.fields)
+                break
+
+            k, v = f.split('=')
+            if k[0] == '?':
+                query.append((k[1:], v))
+            else:
+                fields.append((k, v))
+
+        response = http.request(
+            args.verb.upper(),
+            f'http://{addr}{path_}',
+            query=query,
+            form=body if body else fields,
+        )
+
+        f = sys.stderr if response.status_code >= 400 else sys.stdout
+        print(response.text, end='', file=f)
 
 
 class UNS(cli.Root):
