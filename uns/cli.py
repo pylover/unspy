@@ -144,6 +144,7 @@ class HTTP(cli.SubCommand):
             forceresolve_arg(),
         ),
         timeout_arg(),
+        port_arg(),
         cli.Argument('verb'),
         cli.Argument('url'),
         cli.Argument(
@@ -158,7 +159,11 @@ class HTTP(cli.SubCommand):
     def __call__(self, args):
         fields = []
         query = []
+        files = []
         body = ''
+        path_ = ''
+        port = ''
+
         urlparts = args.url.split('/')
         addr, _ = resolve(
             urlparts[0],
@@ -169,8 +174,9 @@ class HTTP(cli.SubCommand):
         )
         if len(urlparts) > 1:
             path_ = '/' + '/'.join(urlparts[1:])
-        else:
-            path_ = ''
+
+        if args.port:
+            port = f':{args.port}'
 
         # Fields
         for f in args.fields:
@@ -181,14 +187,17 @@ class HTTP(cli.SubCommand):
             k, v = f.split('=')
             if k[0] == '?':
                 query.append((k[1:], v))
+            elif k[0] == '@':
+                files.append((k[1:], v))
             else:
                 fields.append((k, v))
 
         response = http.request(
             args.verb.upper(),
-            f'http://{addr}{path_}',
+            f'http://{addr}{port}{path_}',
             query=query,
             form=body if body else fields,
+            files=files,
         )
 
         f = sys.stderr if response.status_code >= 400 else sys.stdout
