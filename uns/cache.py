@@ -1,6 +1,4 @@
 """Simple file cache for UNS records."""
-from os import path
-
 from . import protocol
 
 
