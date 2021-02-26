@@ -41,13 +41,25 @@ forceresolve_arg = functools.partial(
 )
 
 
+stdout = sys.stdout
+stderr = sys.stderr
+
+
+def output(*a, **kw):
+    print(*a, file=stdout, **kw)
+
+
+def error(*a, **kw):
+    print(*a, file=stderr, **kw)
+
+
 def printrecord(name, addr, cache, short=False):
     if short:
-        print(addr)
+        output(addr)
         return
 
     flags = ' [cache]' if cache else ''
-    print(f'{addr} {name}{flags}')
+    output(f'{addr} {name}{flags}')
 
 
 class Answer(cli.SubCommand):
@@ -62,7 +74,7 @@ class Answer(cli.SubCommand):
     ]
 
     def __call__(self, args):
-        print(f'Answering {args.hostname} to {args.address}:{args.port}')
+        output(f'Answering {args.hostname} to {args.address}:{args.port}')
         protocol.answer(args.hostname, address=args.address, port=args.port)
 
 
@@ -75,12 +87,12 @@ class Sniff(cli.SubCommand):
     ]
 
     def __call__(self, args):
-        print(f'Listening to {IGMP_ADDRESS}:{IGMP_PORT}')
+        output(f'Listening to {IGMP_ADDRESS}:{IGMP_PORT}')
         try:
             for verb, name, addr, port in protocol.sniff():
-                print(f'{addr}:{port} {VERBS.get(verb)} {name}')
+                output(f'{addr}:{port} {VERBS.get(verb)} {name}')
         except KeyboardInterrupt:
-            print('Terminated by user.', file=sys.stderr)
+            error('Terminated by user.')
             return 3
 
 
@@ -199,9 +211,9 @@ class HTTP(cli.SubCommand):
             form=body if body else fields,
             files=files,
         )
-
-        f = sys.stderr if response.status_code >= 400 else sys.stdout
-        print(response.text, end='', file=f)
+        (error if response.status_code >= 400 else output)(
+            response.text, end=''
+        )
 
 
 class UNS(cli.Root):
@@ -227,25 +239,25 @@ class UNS(cli.Root):
         try:
             return super().main(*a, **k)
         except socket.timeout:
-            print('Timeout reached.', file=sys.stderr)
+            error('Timeout reached.')
             return 2
 
         except KeyboardInterrupt:
-            print('Terminated by user.', file=sys.stderr)
+            error('Terminated by user.')
             return 3
 
         except cache.InvalidDBFileError as ex:
-            print(f'Invalid input file: {ex}', file=sys.stderr)
+            error(f'Invalid input file: {ex}')
             return 4
 
         except cache.HostNotFoundError as ex:
-            print(f'Cannot find: {ex}.', file=sys.stderr)
+            error(f'Cannot find: {ex}.')
             return 5
 
     def __call__(self, args):
         if args.version:
             import uns
-            print(uns.__version__)
+            output(uns.__version__)
             return
 
-        self._parser.print_help()
+        self._parser.print_help(file=stdout)

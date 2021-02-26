@@ -1,10 +1,12 @@
+import io
 import sys
+import traceback
 import functools
 from unittest import mock
 
 import pytest
 
-from uns.cli import UNS
+from uns import cli
 
 
 @pytest.fixture
@@ -39,19 +41,32 @@ def requests_mock():
 
 
 @pytest.fixture
-def cliapp(capsys):
+def cliapp():
 
     def wrapper(*args):
         prog = sys.argv[0]
+
+        # Override program name
         sys.argv[0] = 'uns'
+
+        # Preserve standard files and monkeypatch them
+        outback, errback = cli.stdout, cli.stderr
+        cli.stdout, cli.stderr = io.StringIO(), io.StringIO()
+
+        # Run Application
         try:
-            status = UNS.quickstart(argv=args)
+            status = cli.UNS.quickstart(argv=args)
         except:  # noqa
             status = 1
-            err = sys.exc_info()[1]
-            print(err, file=sys.stderr)
-        stdout, stderr = capsys.readouterr()
+            traceback.print_exc()
+
+        # Capture files
+        stdout, stderr = cli.stdout.getvalue(), cli.stderr.getvalue()
+
+        # Restore preserved values
         sys.argv[0] = prog
+        cli.stdout, cli.stderr = outback, errback
+
         return status, stdout, stderr
 
     return wrapper
