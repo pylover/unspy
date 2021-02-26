@@ -65,10 +65,14 @@ class DB:
                 yield host, addr
 
     def load(self):
-        if path.exists(self.filename):
+        try:
             with open(self.filename) as f:
                 for l in f:
                     self._parseline(l)
+        except FileNotFoundError:  # pragma: no cover
+            # Don't worry! the file will be created when save() method is
+            # called.
+            pass
 
     def __enter__(self):
         return self
