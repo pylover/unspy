@@ -37,11 +37,13 @@ def requests_mock():
         response = m.return_value
         response.text = 'bar'
         response.status_code = 200
+        response.headers = {
+            'content-type': 'text/plain'
+        }
         yield m
 
 
-@pytest.fixture
-def cliapp():
+def _cliapp(binary_output=False):
 
     def wrapper(*args):
         prog = sys.argv[0]
@@ -50,8 +52,15 @@ def cliapp():
         sys.argv[0] = 'uns'
 
         # Preserve standard files and monkeypatch them
-        outback, errback = cli.stdout, cli.stderr
-        cli.stdout, cli.stderr = io.StringIO(), io.StringIO()
+        outback = cli.stdout
+        errback = cli.stderr
+
+        cli.stderr = io.StringIO()
+        if binary_output:
+            cli.stdout = mock.Mock()
+            cli.stdout.buffer = io.BytesIO()
+        else:
+            cli.stdout = io.StringIO()
 
         # Run Application
         try:
@@ -60,8 +69,12 @@ def cliapp():
             status = 1
             traceback.print_exc()
 
-        # Capture files
-        stdout, stderr = cli.stdout.getvalue(), cli.stderr.getvalue()
+        # Capture files content
+        stderr = cli.stderr.getvalue()
+        if binary_output:
+            stdout = cli.stdout.buffer.getvalue()
+        else:
+            stdout = cli.stdout.getvalue()
 
         # Restore preserved values
         sys.argv[0] = prog
@@ -70,6 +83,16 @@ def cliapp():
         return status, stdout, stderr
 
     return wrapper
+
+
+@pytest.fixture
+def cliapp():
+    return _cliapp()
+
+
+@pytest.fixture
+def cliapp_binary():
+    return _cliapp(binary_output=True)
 
 
 @pytest.fixture
@@ -95,3 +118,8 @@ def findcli(cliapp):
 @pytest.fixture
 def httpcli(cliapp):
     return functools.partial(cliapp, 'http')
+
+
+@pytest.fixture
+def httpcli_binary(cliapp_binary):
+    return functools.partial(cliapp_binary, 'http')

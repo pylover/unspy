@@ -1,4 +1,5 @@
 import os
+import re
 
 
 IGMP_ADDRESS = '224.0.0.70'
@@ -12,3 +13,6 @@ VERBS = {
 }
 DEFAULT_DBFILE = os.path.join(os.environ['HOME'], '.cache', 'uns')
 DEFAULT_TIMEOUT = 5
+BINARY_CONTENTTYPES = [
+    re.compile('^image/.*'),
+]

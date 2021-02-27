@@ -41,6 +41,21 @@ def test_http(socketclass_mock, requests_mock, dbfile_mock, httpcli):
         files=[('bar', 'baz.txt')],
     )
 
+    requests_mock.return_value.status_code = 400
+    s, o, e = httpcli('get', 'foo.com')
+    assert s == 1
+
+
+def test_http_binary_response(socketclass_mock, requests_mock, dbfile_mock,
+                              httpcli_binary):
+    response = requests_mock.return_value
+    response.content = b'foo bar baz'
+    response.headers['content-type'] = 'image/jpeg'
+    s, o, e = httpcli_binary('get', 'foo.com')
+    assert s == 0
+    assert e == ''
+    assert o == b'foo bar baz'
+
 
 def test_http_port(socketclass_mock, requests_mock, dbfile_mock, httpcli):
     s, o, e = httpcli('-p8080', 'get', 'foo.com/bar')

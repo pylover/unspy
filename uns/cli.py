@@ -5,7 +5,7 @@ import functools
 import easycli as cli
 
 from .constants import IGMP_PORT, IGMP_ADDRESS, VERBS, DEFAULT_DBFILE, \
-    DEFAULT_TIMEOUT
+    DEFAULT_TIMEOUT, BINARY_CONTENTTYPES
 from . import protocol, cache, resolve, http
 
 
@@ -169,8 +169,8 @@ class HTTP(cli.SubCommand):
     ]
 
     def __call__(self, args):
-        fields = []
         query = []
+        fields = []
         files = []
         body = ''
         path_ = ''
@@ -211,9 +211,20 @@ class HTTP(cli.SubCommand):
             form=body if body else fields,
             files=files,
         )
-        (error if response.status_code >= 400 else output)(
-            response.text, end=''
-        )
+
+        # Handle exception
+        if response.status_code >= 400:
+            error(response.text, end='')
+            return 1
+
+        # Binary output
+        if response.headers.get('content-type'):
+            for c in BINARY_CONTENTTYPES:
+                if c.match(response.headers['content-type']):
+                    stdout.buffer.write(response.content)
+                    return
+
+        output(response.text, end='')
 
 
 class UNS(cli.Root):
