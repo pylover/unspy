@@ -36,7 +36,8 @@ def test_http(socketclass_mock, requests_mock, dbfile_mock, httpcli):
     assert s == 1
 
 
-def test_http_urlencoded(socketclass_mock, requests_mock, dbfile_mock, httpcli):
+def test_http_urlencoded(socketclass_mock, requests_mock, dbfile_mock,
+                         httpcli):
     s, o, e = httpcli('set', 'foo.com', 'bar=baz')
     assert s == 0
     requests_mock.assert_called_with(
