@@ -200,7 +200,7 @@ class HTTP(cli.SubCommand):
             if k[0] == '?':
                 query.append((k[1:], v))
             elif k[0] == '@':
-                files.append((k[1:], v))
+                files.append((k[1:], open(v)))
             else:
                 fields.append((k, v))
 

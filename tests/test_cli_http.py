@@ -7,6 +7,8 @@ from unittest import mock
 
 
 def test_http(socketclass_mock, requests_mock, dbfile_mock, httpcli):
+
+    # Simple Get
     s, o, e = httpcli('get', 'foo.com')
     assert e == ''
     assert o == 'bar'
@@ -18,14 +20,31 @@ def test_http(socketclass_mock, requests_mock, dbfile_mock, httpcli):
     sock.recvfrom.assert_called_once()
     requests_mock.assert_called_with('GET', 'http://10.0.0.2')
 
+    # Url
     s, o, e = httpcli('get', 'foo.com/bar')
     assert s == 0
     requests_mock.assert_called_with('GET', 'http://10.0.0.2/bar')
 
+    # Plain HTTP Content
     s, o, e = httpcli('set', 'foo.com', '1')
     assert s == 0
     requests_mock.assert_called_with('SET', 'http://10.0.0.2', data='1')
 
+    # HTTP Errors
+    requests_mock.return_value.status_code = 400
+    s, o, e = httpcli('get', 'foo.com')
+    assert s == 1
+
+
+def test_http_urlencoded(socketclass_mock, requests_mock, dbfile_mock, httpcli):
+    s, o, e = httpcli('set', 'foo.com', 'bar=baz')
+    assert s == 0
+    requests_mock.assert_called_with(
+        'SET', 'http://10.0.0.2',
+        data=[('bar', 'baz')],
+    )
+
+    # With query string
     s, o, e = httpcli('set', 'foo.com', 'bar=baz', '?qux=quux')
     assert s == 0
     requests_mock.assert_called_with(
@@ -34,16 +53,16 @@ def test_http(socketclass_mock, requests_mock, dbfile_mock, httpcli):
         params=[('qux', 'quux')]
     )
 
-    s, o, e = httpcli('set', 'foo.com', '@bar=baz.txt')
-    assert s == 0
-    requests_mock.assert_called_with(
-        'SET', 'http://10.0.0.2',
-        files=[('bar', 'baz.txt')],
-    )
 
-    requests_mock.return_value.status_code = 400
-    s, o, e = httpcli('get', 'foo.com')
-    assert s == 1
+def test_http_multipart(socketclass_mock, requests_mock, dbfile_mock, httpcli):
+    barfile = mock.mock_open(read_data='baz content')
+    with mock.patch('uns.cli.open', barfile) as bar:
+        s, o, e = httpcli('set', 'foo.com', '@bar=baz.txt')
+        assert s == 0
+        requests_mock.assert_called_with(
+            'SET', 'http://10.0.0.2',
+            files=[('bar', bar.return_value)],
+        )
 
 
 def test_http_binary_response(socketclass_mock, requests_mock, dbfile_mock,
