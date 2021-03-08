@@ -21,7 +21,7 @@ dependencies = [
 setup(
     name='uns',
     version=package_version,
-    py_modules=find_packages(),
+    packages=find_packages(),
     install_requires=dependencies,
     include_package_data=True,
     license='MIT',
