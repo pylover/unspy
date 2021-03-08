@@ -157,6 +157,13 @@ class HTTP(cli.SubCommand):
         ),
         timeout_arg(),
         cli.Argument(
+            '-H', '--header',
+            action='append',
+            default=[],
+            help='Extra  header to include in the request when sending HTTP '
+                 'to a server.'
+        ),
+        cli.Argument(
             '-i', '--include-headers',
             action='store_true',
             help='Include protocol response headers in the output.'
@@ -207,13 +214,18 @@ class HTTP(cli.SubCommand):
                 files.append((k[1:], open(v)))
             else:
                 fields.append((k, v))
-
+        # Request headers
+        reqheaders = {
+            k.strip(): v.strip() for k, v in
+            [h.split(':') for h in args.header]
+        }
         response = http.request(
             args.verb.upper(),
             f'http://{addr}{port}{path_}',
             query=query,
             form=body if body else fields,
             files=files,
+            headers=reqheaders
         )
 
         # Handle exception
@@ -228,6 +240,7 @@ class HTTP(cli.SubCommand):
                     stdout.buffer.write(response.content)
                     return
 
+        # Response headers
         if args.include_headers:
             output(
                 '\n'.join([f'{k}: {v}' for k, v in response.headers.items()]),

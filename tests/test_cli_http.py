@@ -95,3 +95,12 @@ def test_http_headers(socketclass_mock, requests_mock, dbfile_mock, httpcli):
         'bar'
     )
     assert s == 0
+
+    s, o, e = httpcli('-Hfoo: bar', 'get', 'foo.com')
+    requests_mock.assert_called_with(
+        'GET', 'http://10.0.0.2',
+        headers={'foo': 'bar'},
+    )
+    assert e == ''
+    assert o == 'bar'
+    assert s == 0

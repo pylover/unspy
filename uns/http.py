@@ -1,9 +1,9 @@
 import requests
 
 
-def request(verb, url='/', form=None, query=None, files=None):
+def request(verb, url='/', form=None, query=None, files=None, headers=None,
+            **kwargs):
     kw = {}
-    # headers = kw.setdefault('headers', {})
 
     if form:
         kw['data'] = form
@@ -13,6 +13,11 @@ def request(verb, url='/', form=None, query=None, files=None):
 
     if files:
         kw['files'] = files
+
+    if headers:
+        kw['headers'] = headers
+
+    kw.update(kwargs)
 
     response = requests.request(verb, url, **kw)
 
