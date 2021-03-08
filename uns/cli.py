@@ -156,6 +156,11 @@ class HTTP(cli.SubCommand):
             forceresolve_arg(),
         ),
         timeout_arg(),
+        cli.Argument(
+            '-i', '--include-headers',
+            action='store_true',
+            help='Include protocol response headers in the output.'
+        ),
         port_arg(),
         cli.Argument('verb'),
         cli.Argument('url'),
@@ -165,7 +170,6 @@ class HTTP(cli.SubCommand):
             default=[],
             nargs='*'
         )
-
     ]
 
     def __call__(self, args):
@@ -223,6 +227,12 @@ class HTTP(cli.SubCommand):
                 if c.match(response.headers['content-type']):
                     stdout.buffer.write(response.content)
                     return
+
+        if args.include_headers:
+            output(
+                '\n'.join([f'{k}: {v}' for k, v in response.headers.items()]),
+                end='\n\n'
+            )
 
         output(response.text, end='')
 

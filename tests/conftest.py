@@ -38,7 +38,8 @@ def requests_mock():
         response.text = 'bar'
         response.status_code = 200
         response.headers = {
-            'content-type': 'text/plain'
+            'content-type': 'text/plain',
+            'Content-Length': '3'
         }
         yield m
 

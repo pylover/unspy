@@ -81,3 +81,17 @@ def test_http_port(socketclass_mock, requests_mock, dbfile_mock, httpcli):
     s, o, e = httpcli('-p8080', 'get', 'foo.com/bar')
     assert s == 0
     requests_mock.assert_called_with('GET', 'http://10.0.0.2:8080/bar')
+
+
+def test_http_headers(socketclass_mock, requests_mock, dbfile_mock, httpcli):
+
+    # Simple Get
+    s, o, e = httpcli('-i', 'get', 'foo.com')
+    assert e == ''
+    assert o == (
+        'content-type: text/plain\n'
+        'Content-Length: 3\n'
+        '\n'
+        'bar'
+    )
+    assert s == 0
