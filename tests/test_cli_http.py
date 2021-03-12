@@ -76,6 +76,11 @@ def test_http_binary_response(socketclass_mock, requests_mock, dbfile_mock,
     assert e == ''
     assert o == b'foo bar baz'
 
+    s, o, e = httpcli_binary('--binary-output', 'get', 'foo.com')
+    assert s == 0
+    assert e == ''
+    assert o == b'foo bar baz'
+
 
 def test_http_port(socketclass_mock, requests_mock, dbfile_mock, httpcli):
     s, o, e = httpcli('-p8080', 'get', 'foo.com/bar')
