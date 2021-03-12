@@ -168,6 +168,11 @@ class HTTP(cli.SubCommand):
             action='store_true',
             help='Include protocol response headers in the output.'
         ),
+        cli.Argument(
+            '-b', '--binary-output',
+            action='store_true',
+            help='Treat response as binary.'
+        ),
         port_arg(),
         cli.Argument('verb'),
         cli.Argument('url'),
@@ -244,13 +249,13 @@ class HTTP(cli.SubCommand):
             return 1
 
         # Binary output
-        if resp.headers.get('content-type'):
+        if args.binary_output and resp.headers.get('content-type'):
             for c in BINARY_CONTENTTYPES:
                 if c.match(resp.headers['content-type']):
                     stdout.buffer.write(resp.content)
                     return
 
-            output(resp.text, end='')
+        output(resp.text, end='')
 
 
 class UNS(cli.Root):
