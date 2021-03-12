@@ -173,7 +173,7 @@ class HTTP(cli.SubCommand):
         cli.Argument('url'),
         cli.Argument(
             'fields',
-            metavar='[?]NAME=VALUE',
+            metavar='[?|@]NAME=VALUE',
             default=[],
             nargs='*'
         )
@@ -211,15 +211,16 @@ class HTTP(cli.SubCommand):
             if k[0] == '?':
                 query.append((k[1:], v))
             elif k[0] == '@':
-                files.append((k[1:], open(v)))
+                files.append((k[1:], open(v, mode='rb')))
             else:
                 fields.append((k, v))
+
         # Request headers
         reqheaders = {
             k.strip(): v.strip() for k, v in
             [h.split(':') for h in args.header]
         }
-        response = http.request(
+        resp = http.request(
             args.verb.upper(),
             f'http://{addr}{port}{path_}',
             query=query,
@@ -228,26 +229,28 @@ class HTTP(cli.SubCommand):
             headers=reqheaders
         )
 
+        # Response headers
+        respheaders = [
+            f'{resp.status_code} {resp.reason} '
+            f'HTTP/{resp.raw.version / 10:.1f}'
+        ]
+        respheaders += [f'{k}: {v}' for k, v in resp.headers.items()]
+        if args.include_headers:
+            output('\n'.join(respheaders), end='\n\n')
+
         # Handle exception
-        if response.status_code >= 400:
-            error(response.text, end='')
+        if resp.status_code >= 400:
+            error(resp.text, end='')
             return 1
 
         # Binary output
-        if response.headers.get('content-type'):
+        if resp.headers.get('content-type'):
             for c in BINARY_CONTENTTYPES:
-                if c.match(response.headers['content-type']):
-                    stdout.buffer.write(response.content)
+                if c.match(resp.headers['content-type']):
+                    stdout.buffer.write(resp.content)
                     return
 
-        # Response headers
-        if args.include_headers:
-            output(
-                '\n'.join([f'{k}: {v}' for k, v in response.headers.items()]),
-                end='\n\n'
-            )
-
-        output(response.text, end='')
+            output(resp.text, end='')
 
 
 class UNS(cli.Root):
