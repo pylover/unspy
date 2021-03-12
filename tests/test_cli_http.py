@@ -89,6 +89,7 @@ def test_http_headers(socketclass_mock, requests_mock, dbfile_mock, httpcli):
     s, o, e = httpcli('-i', 'get', 'foo.com')
     assert e == ''
     assert o == (
+        '200 OK HTTP/1.1\n'
         'content-type: text/plain\n'
         'Content-Length: 3\n'
         '\n'

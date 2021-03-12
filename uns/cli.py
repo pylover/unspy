@@ -249,13 +249,20 @@ class HTTP(cli.SubCommand):
             return 1
 
         # Binary output
-        if args.binary_output and resp.headers.get('content-type'):
+        binary = False
+        if args.binary_output:
+            binary = True
+
+        elif resp.headers.get('content-type'):
             for c in BINARY_CONTENTTYPES:
                 if c.match(resp.headers['content-type']):
-                    stdout.buffer.write(resp.content)
-                    return
+                    binary = True
+                    break
 
-        output(resp.text, end='')
+        if binary:
+            stdout.buffer.write(resp.content)
+        else:
+            output(resp.text, end='')
 
 
 class UNS(cli.Root):

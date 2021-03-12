@@ -37,10 +37,13 @@ def requests_mock():
         response = m.return_value
         response.text = 'bar'
         response.status_code = 200
+        response.reason = 'OK'
         response.headers = {
             'content-type': 'text/plain',
             'Content-Length': '3'
         }
+        raw = response.raw
+        raw.version = 11
         yield m
 
 
