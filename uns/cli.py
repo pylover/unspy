@@ -181,8 +181,8 @@ class HTTP(cli.SubCommand):
             metavar='[?|@]NAME=VALUE',
             default=[],
             nargs='*',
-            help='You may use file:// prefix to send a file as request body '
-                 'for example: "uns http put hostname file://path/to/file".'
+            help='You may use ":" prefix to send a file as request body '
+                 'for example: "uns http put hostname :path/to/file".'
         )
     ]
 
@@ -223,8 +223,8 @@ class HTTP(cli.SubCommand):
                 fields.append((k, v))
 
         # Open body if it's a filename
-        if body and body.startswith('file://'):
-            body = open(body[7:], mode='rb')
+        if body and body.startswith(':'):
+            body = open(body[1:], mode='rb')
 
         # Request headers
         reqheaders = {
