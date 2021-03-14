@@ -180,7 +180,9 @@ class HTTP(cli.SubCommand):
             'fields',
             metavar='[?|@]NAME=VALUE',
             default=[],
-            nargs='*'
+            nargs='*',
+            help='You may use file:// prefix to send a file as request body '
+                 'for example: "uns http put hostname file://path/to/file".'
         )
     ]
 
