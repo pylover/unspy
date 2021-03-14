@@ -220,6 +220,10 @@ class HTTP(cli.SubCommand):
             else:
                 fields.append((k, v))
 
+        # Open body if it's a filename
+        if body and body.startswith('file://'):
+            body = open(body[7:], mode='rb')
+
         # Request headers
         reqheaders = {
             k.strip(): v.strip() for k, v in

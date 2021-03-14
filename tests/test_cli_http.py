@@ -30,6 +30,16 @@ def test_http(socketclass_mock, requests_mock, dbfile_mock, httpcli):
     assert s == 0
     requests_mock.assert_called_with('SET', 'http://10.0.0.2', data='1')
 
+    # File ad request body
+    barfile = mock.mock_open(read_data='baz content')
+    with mock.patch('uns.cli.open', barfile) as bar:
+        s, o, e = httpcli('put', 'foo.com', 'file://bar.txt')
+        assert s == 0
+        requests_mock.assert_called_with(
+            'PUT', 'http://10.0.0.2',
+            data=bar.return_value,
+        )
+
     # HTTP Errors
     requests_mock.return_value.status_code = 400
     s, o, e = httpcli('get', 'foo.com')
